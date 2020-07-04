@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地雷</title>
+    <style>
+        #exp {
+            margin: auto;
+        }
+
+        #game {
+            margin: auto;
+        }
+
+        #m {
+            font-family: '微軟正黑體';
+            margin-left: 35%;
+        }
+
+        #btn-start {
+            margin: auto;
+            height: 40px;
+            text-align: center;
+        }
+
+        .hole {
+            width: 40px;
+            height: 40px;
+            background: gray;
+            box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.5), inset 1px 2px white;
+            cursor: url(./旗子.png)50 50, auto;
+        }
+
+        .bomb {
+            background: red;
+
+        }
+
+        .bomb2 {
+            background: url('./地雷-01.png') no-repeat center/cover;
+            width: 40px;
+            height: auto;
+            z-index: 2;
+        }
+
+        .w {
+            background: rgb(230, 230, 230);
+            box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.5), inset 1px 2px white;
+        }
+
+        .w2 {
+            background: gray;
+        }
+
+        td {
+            height: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <table id="exp">
+        <tr>
+            <td>目前分數: <span id="text-score">0</span></td>
+            <td><input type="button" id="btn-start"
+                    style="background: url('./smile.png')center/cover ;width: 50px; border: none;"></td>
+            <td>剩餘時間:<span id="text-time">20</span></td>
+        </tr>
+    </table>
+    <table id="game" border="1">
+    </table>
+    <hr>
+    <div id="m">
+        最高分:<br>
+        玩家:<span id="text-highplayer">沒有人</span><br>
+        分數: <span id="text-highscore">0</span><br>
+        說明：<br>
+        按到紅色及扣分，白灰色及加分，請按笑臉開始遊戲。
+    </div>
+    <script>
+        const gametable = document.getElementById('game');
+        const holes = document.getElementsByClassName("hole");
+        const ms = document.getElementsByClassName("m")
+        const btnStart = document.getElementById("btn-start");
+        const textScore = document.getElementById("text-score");
+        const textTime = document.getElementById("text-time");
+        const textHighPlayer = document.getElementById("text-highplayer");
+        const textHighScore = document.getElementById("text-highscore");
+        // const rihai = new Audio();
+        // rihai.src = "./rihai.mp3"
+
+        // 分數
+        let score = 0;
+        // 是否在遊戲中
+        let inGame = false;
+        // 剩餘秒數
+        let timeleft = 20;
+        // 計時器
+        let timer = 0;
+        // 最高分
+        let highscore = { name: '', score: 0 }
+        // 表格數量
+        let td = '';
+        let holeid = 1;
+
+        let num = prompt('請輸入想要挑戰幾乘幾的格子')
+
+        for (let i = 0; i < num; i++) {
+            td += `<td class="hole"></td>`
+        }
+        // 在元素內插入 HTML
+        for (let i = 0; i < num; i++) {
+            gametable.insertAdjacentHTML('beforeend', `<tr class="m">${td}</tr>`);
+        }
+
+
+        // children 可以抓取下一層所有元素
+        for (i = 0; i < num; i++) {
+            for (j = 0; j < num; j++) {
+                console.log(ms[i].children[j])
+                // 修改元素屬性
+                ms[i].children[j].setAttribute('id', `hole${holeid}`);
+                holeid++
+                // console.log(holeid);
+            }
+        }
+
+        //  JSON.parse 將localStorage 存的文字轉成可以使用的陣列
+        let storage = JSON.parse(localStorage.getItem("highscore"));
+        if (storage != null) {
+            highscore.name = storage.name;
+            textHighPlayer.innerText = highscore.name;
+            highscore.score = storage.score;
+            textHighScore.innerText = highscore.score;
+        }
+
+        btnStart.onclick = () => {
+            // 停用開始按鈕
+            btnStart.disabled = true;
+            // 設定每秒變換一次
+            timer = setInterval(game, 1000);
+            game();
+            // 重置分數
+            score = 0;
+            textScore.innerText = score;
+            // 設定狀態為遊戲中
+            inGame = true;
+            // 重設時間
+            timeleft = 20;
+            textTime.innerText = timeleft;
+        }
+
+
+        const game = () => {
+            // 清掉格子的 class
+            for (let hole of holes) {
+                hole.classList.remove("bomb");
+                hole.classList.remove("bomb2");
+                hole.classList.remove("w");
+                hole.classList.remove("w2");
+            }
+
+            // 隨機  因為是幾層*幾層 隨機數 num*num
+            for (let i = 0; i < num / 2; i++) {
+                const rand = Math.floor(Math.random() * num * num);
+                const rand2 = Math.floor(Math.random() * num * num);
+                holes[rand].classList.add("bomb");
+                if (holes[rand2].classList.contains('bomb') == false) {
+                    holes[rand2].classList.add("w");
+                }
+                console.log(holes[rand]);
+            }
+
+
+
+            // 時間減一
+            timeleft--;
+            textTime.innerText = timeleft;
+
+            // 如果時間到了
+            if (timeleft == 0) {
+                // 設定狀態為不在遊戲中
+                inGame = false;
+                // 停止計時器
+                clearInterval(timer);
+                // 清掉格子的 class
+                for (let hole of holes) {
+                    hole.classList.remove("bomb");
+                    hole.classList.remove("bomb2");
+                    hole.classList.remove("w");
+                    hole.classList.remove("w2");
+                }
+                // 啟用開始按鈕
+                btnStart.disabled = false;
+                alert(`你得到 ${score} 分`);
+
+                // 如果沒有分數紀錄，或是大於目前分數
+                if (storage == null || score > highscore.score) {
+                    // rihai.play();
+                    // 輸入名字
+                    const input = prompt("恭喜最高分，請輸入名字");
+                    // 如果有輸入
+                    if (input != null && input.trim() != '') {
+                        // 將輸入的名字與分數存入變數
+                        highscore.score = score;
+                        highscore.name = input;
+                        // 修改最高分文字
+                        textHighPlayer.innerText = highscore.name;
+                        textHighScore.innerText = highscore.score;
+                        // 將最高分變數轉文字後存入 localStorage
+                        localStorage.setItem("highscore", JSON.stringify(highscore));
+                    }
+                }
+            }
+        }
+
+        for (let hole of holes) {
+            hole.onclick = () => {
+                // 如果在遊戲中且包含red
+                if (inGame && hole.classList.contains("bomb")) {
+                    // 標記為按下去
+                    hole.classList.add("bomb2");
+                    hole.classList.remove("bomb");
+                    // 減一分
+                    score--;
+                    textScore.innerText = score;
+                }
+                else if (inGame && hole.classList.contains("w")) {
+                    // 標記為按下去
+                    hole.classList.add("w2");
+                    hole.classList.remove("w");
+                    // 加一分
+                    score++;
+                    textScore.innerText = score;
+                }
+            }
+        }
+
+
+
+    </script>
+</body>
+
+</html>
